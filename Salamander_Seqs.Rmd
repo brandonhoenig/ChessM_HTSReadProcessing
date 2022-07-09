@@ -36,7 +36,8 @@ out <- filterAndTrim(fnFs, # input
                      rm.phix = T, #remove PhiX reads
                      compress = T, 
                      multithread = T,
-                     trimLeft = 28)
+                     trimLeft = 28,
+                     trimRight = 26)
 head(out)
 ```
 
@@ -53,7 +54,7 @@ plotErrors(errF, nominalQ=TRUE)
 Sample Inference
 ```{r}
 dadaFs <- dada(filtFs, err=errF, multithread=TRUE)
-dadaFs[[1]]
+dadaFs
 ```
 
 Construct Sequence Table
@@ -64,12 +65,12 @@ dim(seqtab)
 
 Remove Chimeras
 ```{r}
-seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="per-sample", multithread=TRUE, verbose=TRUE)
 dim(seqtab.nochim)
 ```
 
 ```{r}
-colnames(seqtab.nochim) %>%
-  as.data.frame() %>% view()
+seqtab.nochim %>% 
+  colnames()
 ```
 
