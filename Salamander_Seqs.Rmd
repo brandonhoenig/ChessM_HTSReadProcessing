@@ -35,7 +35,8 @@ out <- filterAndTrim(fnFs, # input
                      filtFs, #output
                      rm.phix = T, #remove PhiX reads
                      compress = T, 
-                     multithread = T)
+                     multithread = T,
+                     trimLeft = 28)
 head(out)
 ```
 
