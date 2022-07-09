@@ -1,0 +1,10 @@
+﻿sample-id,absolute-filepath,direction
+LOWA-04,/Users/brandonhoenig/Desktop/Salamander_Seqs/LOWA-04_S137_L001_R1_001.fastq,forward
+LOWA-35,/Users/brandonhoenig/Desktop/Salamander_Seqs/LOWA-35_S138_L001_R1_001.fastq,forward
+LOWA-98291,/Users/brandonhoenig/Desktop/Salamander_Seqs/LOWA-98291_S139_L001_R1_001.fastq,forward
+LOWA-98292,/Users/brandonhoenig/Desktop/Salamander_Seqs/LOWA-98292_S140_L001_R1_001.fastq,forward
+LOWA-98293,/Users/brandonhoenig/Desktop/Salamander_Seqs/LOWA-98293_S141_L001_R1_001.fastq,forward
+LOWA-98294,/Users/brandonhoenig/Desktop/Salamander_Seqs/LOWA-98294_S142_L001_R1_001.fastq,forward
+LOWA-98295,/Users/brandonhoenig/Desktop/Salamander_Seqs/LOWA-98295_S143_L001_R1_001.fastq,forward
+LOWA-Neg,/Users/brandonhoenig/Desktop/Salamander_Seqs/LOWA-Neg_S145_L001_R1_001.fastq,forward
+LOWA-Nmac,/Users/brandonhoenig/Desktop/Salamander_Seqs/LOWA-Nmac_S144_L001_R1_001.fastq,forward
