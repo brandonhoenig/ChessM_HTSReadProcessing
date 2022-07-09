@@ -1,0 +1,74 @@
+---
+title: "ChessM_HTSReadProcessing"
+author: "Brandon D. Hoenig"
+date: '2022-07-09'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(dada2)
+```
+
+Read in sequences and create list of sample names
+```{r}
+fnFs <- sort(list.files(pattern= "_R1_001.fastq"))
+sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
+```
+
+Inspect Quality Plots
+```{r}
+plotQualityProfile(fnFs[1:2])
+```
+
+Place filtered files in filtered/ subdirectory
+```{r}
+filtFs <- file.path("filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+names(filtFs) <- sample.names
+```
+
+filter reads
+```{r}
+out <- filterAndTrim(fnFs, # input
+                     filtFs, #output
+                     rm.phix = T, #remove PhiX reads
+                     compress = T, 
+                     multithread = T)
+head(out)
+```
+
+Learn Error Rates 
+```{r}
+errF <- learnErrors(filtFs, multithread=TRUE)
+```
+
+Plot Error Rates
+```{r}
+plotErrors(errF, nominalQ=TRUE)
+```
+
+Sample Inference
+```{r}
+dadaFs <- dada(filtFs, err=errF, multithread=TRUE)
+dadaFs[[1]]
+```
+
+Construct Sequence Table
+```{r}
+seqtab <- makeSequenceTable(dadaFs)
+dim(seqtab)
+```
+
+Remove Chimeras
+```{r}
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+dim(seqtab.nochim)
+```
+
+```{r}
+colnames(seqtab.nochim) %>%
+  as.data.frame() %>% view()
+```
+
