@@ -11,40 +11,64 @@ editor_options:
 library(tidyverse)
 library(dada2)
 library(seqinr)
+library(taxonomizr)
+library(R.utils)
 ```
 
 Read in sequences and create list of sample names
 ```{r}
-fnFs <- sort(list.files(pattern= "_R1_001.fastq"))
+fnFs <- sort(list.files(pattern= "_R1_001.fastq", full.names = T))
+fnRs <- sort(list.files(pattern="_R2_001.fastq", full.names = T))
 sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
 ```
 
+Trim Primers
+```{r}
+fnFs_trimmed <- file.path("trimmed", paste0(sample.names, "_F_trimmed.fastq.gz"))
+fnRs_trimmed <- file.path("trimmed", paste0(sample.names, "_R_trimmed.fastq.gz"))
+
+removePrimers(fn = fnFs, fout = fnFs_trimmed, 
+              primer.fwd = "GRYCTGAAAAAYCAATGTTGTATTCAAC")
+
+removePrimers(fn = fnRs, fout = fnRs_trimmed, 
+              primer.fwd = "AATGC")
+
+fnFs <- sort(list.files(path = 'trimmed/', pattern= "_F_trimmed.fastq"))
+fnRs <- sort(list.files(path = 'trimmed/', pattern= "_R_trimmed.fastq"))
+sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
+```
+
+
 Inspect Quality Plots
 ```{r}
-plotQualityProfile(fnFs[1:2])
+plotQualityProfile(paste0('trimmed/',fnFs[1:2]))
 ```
 
 Place filtered files in filtered/ subdirectory
 ```{r}
 filtFs <- file.path("filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+filtRs <- file.path("filtered", paste0(sample.names, "_R_filt.fastq.gz"))
 names(filtFs) <- sample.names
+names(filtRs) <- sample.names
 ```
 
 filter reads
 ```{r}
-out <- filterAndTrim(fnFs, # input
-                     filtFs, #output
+out <- filterAndTrim(fwd = paste0("trimmed/", fnFs), # input
+                     filt = filtFs, #output
+                     rev = paste0("trimmed/", fnRs), # input
+                     filt.rev = filtRs, #output
                      rm.phix = T, #remove PhiX reads
                      compress = T, 
-                     multithread = T,
-                     trimLeft = 28,
-                     trimRight = 26)
+                     multithread = F,
+                     matchIDs = T)
 head(out)
 ```
 
 Learn Error Rates 
 ```{r}
 errF <- learnErrors(filtFs, multithread=TRUE)
+errR <- learnErrors(filtRs, multithread = TRUE)
 ```
 
 Plot Error Rates
@@ -56,20 +80,30 @@ Sample Inference
 ```{r}
 dadaFs <- dada(filtFs, err=errF, multithread=TRUE)
 dadaFs
+dadaRs <- dada(filtRs, err=errR, multithread=TRUE)
+dadaRs
 ```
+
+Merge froward and reverse reads
+```{r}
+mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=TRUE, maxMismatch = 0, minOverlap = 215)
+
+```
+
 
 Construct Sequence Table
 ```{r}
-seqtab <- makeSequenceTable(dadaFs)
+seqtab <- makeSequenceTable(mergers)
 dim(seqtab)
 ```
 
 Remove Chimeras
 ```{r}
-seqtab.nochim <- removeBimeraDenovo(seqtab, method="per-sample", multithread=TRUE, verbose=TRUE)
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
 dim(seqtab.nochim)
 ```
 
+write fasta with sequence IDs
 ```{r}
 seqtab.nochim %>% 
   colnames()
@@ -89,16 +123,23 @@ read_csv('fromBLASTn/CM61T4MD013-Alignment-HitTable.csv',col_names = F) %>%
 colnames(seqsFromBLAST) <- c("Seq_ID", "Accession", "Perc_Ident", "Match_Len", "Query_Len", "E_Val", "BitScore")
 ```
 
+quality filter sequences
 ```{r}
 seqsFromBLAST %>%
-  filter(Query_Len > (0.9 * 196)) %>%
   mutate(Perc_Len = Match_Len / Query_Len) %>%
-  filter(Perc_Ident > 95) %>%
+  filter(Perc_Ident > 97) %>%
+  filter(Perc_Len > 0.97) %>%
+  filter(Query_Len >=175) %>%
   group_by(Seq_ID)  %>% 
   top_n(n=1, wt = BitScore) %>% 
-  ungroup() %>%
+  ungroup() %>% 
   select(Accession) %>%
   unique() %>%
   write_tsv(., file = 'output/accessionNumbers.tsv')
+```
+
+```{r}
+accessionNumbers <-
+read_tsv('output/accessionNumbers.tsv') 
 ```
 
