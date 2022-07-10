@@ -80,3 +80,25 @@ write.fasta(sequences = as.list(seqtab.nochim %>%
   as.string = T, file.out = 'output/dada2_processed_sequences.fasta')
 ```
 
+sequences were then uploaded to BLASTn and downloaded into the 'fromBLASTn' folder
+```{r}
+seqsFromBLAST <-
+read_csv('fromBLASTn/CM61T4MD013-Alignment-HitTable.csv',col_names = F) %>%
+  select(X1, X2, X3, X4, X8, X11, X12)
+
+colnames(seqsFromBLAST) <- c("Seq_ID", "Accession", "Perc_Ident", "Match_Len", "Query_Len", "E_Val", "BitScore")
+```
+
+```{r}
+seqsFromBLAST %>%
+  filter(Query_Len > 194) %>%
+  mutate(Perc_Len = Match_Len / Query_Len) %>%
+  filter(Perc_Len > 0.95) %>%
+  filter(Perc_Ident > 95) %>%
+  group_by(Seq_ID)  %>% 
+  top_n(n=1, wt = BitScore) %>% 
+  ungroup() %>%
+  select(Accession) %>%
+  unique()
+```
+
