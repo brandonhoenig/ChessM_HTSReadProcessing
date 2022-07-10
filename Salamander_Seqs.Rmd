@@ -91,14 +91,14 @@ colnames(seqsFromBLAST) <- c("Seq_ID", "Accession", "Perc_Ident", "Match_Len", "
 
 ```{r}
 seqsFromBLAST %>%
-  filter(Query_Len > 194) %>%
+  filter(Query_Len > (0.9 * 196)) %>%
   mutate(Perc_Len = Match_Len / Query_Len) %>%
-  filter(Perc_Len > 0.95) %>%
   filter(Perc_Ident > 95) %>%
   group_by(Seq_ID)  %>% 
   top_n(n=1, wt = BitScore) %>% 
   ungroup() %>%
   select(Accession) %>%
-  unique()
+  unique() %>%
+  write_tsv(., file = 'output/accessionNumbers.tsv')
 ```
 
