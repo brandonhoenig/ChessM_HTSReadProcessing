@@ -10,6 +10,7 @@ editor_options:
 ```{r}
 library(tidyverse)
 library(dada2)
+library(seqinr)
 ```
 
 Read in sequences and create list of sample names
@@ -72,5 +73,10 @@ dim(seqtab.nochim)
 ```{r}
 seqtab.nochim %>% 
   colnames()
+
+write.fasta(sequences = as.list(seqtab.nochim %>% 
+              colnames()), 
+            names = paste0("seq_", c(1:131)),
+  as.string = T, file.out = 'output/dada2_processed_sequences.fasta')
 ```
 
